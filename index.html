@@ -56,6 +56,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* top + hero */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 0;min-height:60px}
 .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.linkish{background:none;border:0;padding:0;margin:0;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;cursor:pointer}
+.linkish:hover{color:var(--accent)}
 .btn.is-on{background:var(--ink);color:var(--wall)}
 .hero{padding:clamp(14px,3.5vw,44px) 0 clamp(32px,5vw,64px);border-bottom:2px solid var(--ink)}
 .avatar{width:76px;height:76px;border-radius:50%;object-fit:cover;margin:0 0 16px;background:var(--panel)}
@@ -268,7 +270,7 @@ try { adultOK = localStorage.getItem(ADULT_KEY) === 'yes'; } catch(e){}
 
 function blobUrl(id){
   if (state.assetMap && state.assetMap[id]) return state.assetMap[id];
-  return '/_blob/' + encodeURIComponent(id);
+  return '/img/' + encodeURIComponent(id);
 }
 function refs(s){
   var r = new Set();
@@ -571,7 +573,8 @@ function render(){
       '<header class="top">' +
         '<span class="mono">' + esc(P.location ? 'Portfolio · ' + P.location : 'Portfolio') + '</span>' +
         (canEdit ? '<div class="top-actions"><button type="button" class="btn btn-small btn-primary" data-act="upload"' + (busy ? ' disabled' : '') + '>Upload art</button>' +
-          '<button type="button" class="btn btn-small' + (editing ? ' is-on' : '') + '" data-act="toggle-edit" aria-pressed="' + editing + '">' + (editing ? 'Done editing' : 'Edit site') + '</button></div>' : '') +
+          '<button type="button" class="btn btn-small' + (editing ? ' is-on' : '') + '" data-act="toggle-edit" aria-pressed="' + editing + '">' + (editing ? 'Done editing' : 'Edit site') + '</button>' +
+          '<button type="button" class="btn btn-small" data-act="logout">Log out</button></div>' : '') +
       '</header>' +
       '<section class="hero">' +
         (P.avatar ? '<img class="avatar" src="' + esc(blobUrl(P.avatar.id)) + '" alt="">' : '') +
@@ -596,7 +599,8 @@ function render(){
         '<div class="grid" id="grid">' + gridHTML() + '</div>' +
         '<p class="empty mono" id="empty" hidden></p>' +
       '</section>' +
-      '<footer class="foot mono"><span>© ' + new Date().getFullYear() + ' ' + esc(P.name || '') + '</span>' +
+      '<footer class="foot mono"><span>© ' + new Date().getFullYear() + ' ' + esc(P.name || '') +
+        (canEdit ? '' : ' · <button type="button" class="linkish" data-act="login">Owner log in</button>') + '</span>' +
         (state.updated ? '<span>Updated ' + esc(fmtDate(state.updated)) + '</span>' : '') +
       '</footer>' +
     '</div>' +
@@ -1000,9 +1004,9 @@ function squareAvatar(file){
   });
 }
 function uploadBlob(b){
-  if (!caps.assets) return Promise.reject(new Error('Uploading is only available to the site owner.'));
+  if (!canEdit) return Promise.reject(new Error('Log in to upload.'));
   if (b.size > 20 * 1024 * 1024) return Promise.reject(new Error('That file is over the 20 MB limit.'));
-  return caps.assets.upload(b).then(function(r){
+  return backend.upload(b).then(function(r){
     if (!r || !r.id) throw new Error('The upload did not finish. Try again.');
     newUploads.add(r.id); saveDraft();
     return r;
@@ -1170,35 +1174,33 @@ function buildDocument(s){
     '<' + S + ' id="app-js">' + js + '</' + S + '>\n</body>\n</html>\n';
 }
 function publishNow(msg){
-  if (!caps.artifact){ toast('Publishing is only available to the site owner.'); return Promise.resolve(false); }
+  if (!canEdit){ toast('Log in to save changes.'); return Promise.resolve(false); }
   busy = true;
   var next = clone(state); next.updated = today();
   var after = refs(next);
   var candidates = new Set(Array.from(refs(published)).concat(Array.from(newUploads)));
   pendingToast = msg || 'Published. Your site is up to date.';
-  return Promise.resolve().then(function(){ return caps.artifact.publish(buildDocument(next)); }).then(function(){
+  return backend.save(next).then(function(){
     clearDraft();
-    candidates.forEach(function(id){ if (!after.has(id) && caps.assets){ caps.assets.delete(id).catch(function(){}); } });
+    candidates.forEach(function(id){ if (!after.has(id) && !isStatic(id)) backend.remove(id).catch(function(){}); });
     published = next; state = clone(next); dirty = false; editing = false; busy = false; newUploads.clear();
     render(); toast(pendingToast, 6000);
     return true;
   }, function(e){
-    pendingToast = null; busy = false; render();
-    var c = String((e && (e.code || e.message)) || e);
-    if (/conflict/i.test(c)) toast('A newer version was published elsewhere. The page will reload to it.', 7000);
-    else if (/not_granted|not_writer/i.test(c)) toast("This account can't publish changes to this page.", 7000);
-    else toast('Publishing failed (' + c + '). Your changes are saved here; tap Publish changes to try again.', 8000);
+    pendingToast = null; busy = false;
+    if (e && e.code === 401){ loggedOut(); toast("You've been logged out. Log in again; your changes are still on this device.", 8000); }
+    else { render(); toast('Publishing failed: ' + errMsg(e) + ' Your changes are still on this device; tap Publish changes to try again.', 8000); }
     return false;
   });
 }
 function publish(btn){
-  if (!caps.artifact || busy || !dirty) return;
+  if (!canEdit || busy || !dirty) return;
   btn.disabled = true; btn.textContent = 'Publishing…';
   publishNow();
 }
 function discard(){
   var keep = refs(published);
-  newUploads.forEach(function(id){ if (!keep.has(id) && caps.assets) caps.assets.delete(id).catch(function(){}); });
+  newUploads.forEach(function(id){ if (!keep.has(id) && canEdit) backend.remove(id).catch(function(){}); });
   newUploads.clear(); state = clone(published); dirty = false; clearDraft(); render();
   toast('Changes discarded.');
 }
@@ -1260,6 +1262,8 @@ D.addEventListener('click', function(e){
     case 'open': openLightbox(t.dataset.id); break;
     case 'toggle-edit': editing = !editing; render(); break;
     case 'upload': openUploader(); break;
+    case 'login': openLogin(); break;
+    case 'logout': logout(); break;
     case 'links-18': ageGate(null, 'These accounts post art made for adults.', function(){ var n = app.querySelector('.links'); if (n) n.scrollIntoView({block:'nearest'}); }); break;
     case 'edit-profile': editProfile(); break;
     case 'edit-links': editLinks(); break;
@@ -1276,20 +1280,68 @@ window.addEventListener('hashchange', function(){
   filter = f; applyFilter(true);
 });
 
-/* ---------- capabilities ---------- */
-function initCaps(){
-  if (capsStarted) return;
-  var c = window.claude;
-  if (!c || typeof c.use !== 'function') return;
-  capsStarted = true;
-  Promise.all([c.use('artifact'), c.use('assets')]).then(function(r){
-    caps.artifact = r[0]; caps.assets = r[1];
-    if (caps.artifact && caps.assets){
-      canEdit = true;
-      if (restoreDraft()) toast('Your unpublished changes are back.');
-      render();
+/* ---------- owner login + saving (Cloudflare Pages Functions in /functions) ---------- */
+function api(path, opts){
+  opts = opts || {}; opts.credentials = 'same-origin'; opts.cache = 'no-store';
+  return fetch(path, opts).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if (!r.ok){ var e = new Error(j.error || ('The server answered ' + r.status + '.')); e.code = r.status; throw e; }
+      return j;
+    });
+  });
+}
+var backend = {
+  upload: function(b){ return api('/api/admin/img', {method:'POST', headers:{'Content-Type':b.type || 'application/octet-stream', 'X-Snep-Admin':'1'}, body:b}); },
+  remove: function(id){ return api('/api/admin/img/' + encodeURIComponent(id), {method:'DELETE', headers:{'X-Snep-Admin':'1'}}); },
+  save: function(d){ return api('/api/admin/data', {method:'PUT', headers:{'Content-Type':'application/json', 'X-Snep-Admin':'1'}, body:JSON.stringify(d)}); }
+};
+function isStatic(id){ return !!((state.assetMap && state.assetMap[id]) || (published.assetMap && published.assetMap[id])); }
+function hasOwnerFlag(){ return /(?:^|;\s*)snep_admin=1(?:;|$)/.test(D.cookie || ''); }
+function becomeOwner(){
+  canEdit = true;
+  if (restoreDraft()) toast('Your unsaved changes are back.');
+  render();
+}
+function loggedOut(){
+  canEdit = false; editing = false;
+  try { D.cookie = 'snep_admin=; Path=/; Max-Age=0; SameSite=Strict; Secure'; } catch(e){}
+  render();
+}
+function checkOwner(){
+  if (!hasOwnerFlag()) return;
+  api('/api/admin/me').then(becomeOwner, function(e){ if (e && e.code === 401) loggedOut(); });
+}
+function openLogin(){
+  openDialog({
+    title:'Owner log in',
+    body:'<div class="field"><label for="f-pass">Password</label><input id="f-pass" type="password" autocomplete="current-password"></div><p class="err" id="f-lerr" role="alert"></p>',
+    foot:'<button type="button" class="btn" data-dact="cancel">Cancel</button><button type="submit" class="btn btn-primary" id="f-lgo">Log in</button>',
+    onMount:function(form){ setTimeout(function(){ form.querySelector('#f-pass').focus(); }, 30); },
+    onSubmit:function(form){
+      var pw = form.querySelector('#f-pass').value, err = form.querySelector('#f-lerr'), go = form.querySelector('#f-lgo');
+      if (!pw){ err.textContent = 'Type your password.'; return; }
+      go.disabled = true; go.textContent = 'Logging in…'; err.textContent = '';
+      api('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pw})}).then(function(){
+        closeDialog(); becomeOwner(); toast('Logged in. Use Upload art or Edit site.');
+      }, function(e){ go.disabled = false; go.textContent = 'Log in'; err.textContent = errMsg(e, 'Logging in failed.'); });
     }
-  }).catch(function(){});
+  });
+}
+function logout(){
+  api('/api/logout', {method:'POST', headers:{'X-Snep-Admin':'1'}}).catch(function(){}).then(function(){ loggedOut(); toast('Logged out.'); });
+}
+/* the saved gallery lives in Cloudflare; the copy built into this file is the fallback */
+function loadLive(){
+  return fetch('/api/data', {cache:'no-store', credentials:'same-origin'})
+    .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
+    .then(function(d){
+      if (!d || !Array.isArray(d.pieces)) return;
+      if (!d.assetMap && published.assetMap) d.assetMap = published.assetMap;
+      if (JSON.stringify(d) === JSON.stringify(published)) return;
+      published = d;
+      if (!dirty) state = clone(d);
+      render();
+    });
 }
 
 /* ---------- boot ---------- */
@@ -1303,8 +1355,7 @@ function boot(data){
   render();
   if (gated) ageGate(gated);
   if (data.toast) setTimeout(function(){ toast(data.toast, 6000); }, 300);
-  initCaps();
-  if (!capsStarted) window.addEventListener('load', initCaps, {once:true});
+  loadLive().then(checkOwner);
 }
 var hot = window.claude && window.claude.hot;
 if (hot && hot.snapshot) hot.snapshot(function(){ return {filter:filter, toast:pendingToast, adultOK:adultOK}; });
