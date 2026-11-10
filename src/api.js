@@ -86,7 +86,12 @@ function sessionCookies(token, maxAge) {
   h.append('Set-Cookie', `${FLAG}=${maxAge ? '1' : ''}; Path=/; Secure; SameSite=Strict; Max-Age=${maxAge}`);
   return h;
 }
-const configured = (env) => !!(env.SITE && env.ADMIN_PASSWORD);
+// Says which piece of setup is missing (never its value), so the login box can point at the right fix.
+function setupProblem(env) {
+  if (!env.ADMIN_PASSWORD) return "Cloudflare can't see the ADMIN_PASSWORD secret yet. It has to be under Settings > Variables and Secrets, not under Build.";
+  if (!env.SITE) return "Cloudflare can't see the SITE storage yet. Push again or re-run the last build.";
+  return '';
+}
 
 async function readLimited(request, limit) {
   const len = Number(request.headers.get('Content-Length') || 0);
@@ -96,7 +101,8 @@ async function readLimited(request, limit) {
 }
 
 async function login(request, env) {
-  if (!configured(env)) return fail(503, "Logging in isn't set up on Cloudflare yet.");
+  const problem = setupProblem(env);
+  if (problem) return fail(503, problem);
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   const rlKey = 'rl:' + ip;
   const tries = Number((await env.SITE.get(rlKey)) || 0);
@@ -128,7 +134,8 @@ function validSite(d) {
 }
 
 async function admin(request, env, rest) {
-  if (!configured(env)) return fail(503, "Logging in isn't set up on Cloudflare yet.");
+  const problem = setupProblem(env);
+  if (problem) return fail(503, problem);
   if (!(await validToken(env, cookie(request, COOKIE)))) return fail(401, "You're logged out. Log in again to make changes.");
   const method = request.method;
   // Writes must come from the site's own script: a custom header can't be sent cross-site without CORS, which this API never allows.
