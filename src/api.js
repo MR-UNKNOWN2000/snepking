@@ -88,8 +88,8 @@ function sessionCookies(token, maxAge) {
 }
 // Says which piece of setup is missing (never its value), so the login box can point at the right fix.
 function setupProblem(env) {
-  if (!env.ADMIN_PASSWORD) return "Cloudflare can't see the ADMIN_PASSWORD secret yet. It has to be under Settings > Variables and Secrets, not under Build.";
-  if (!env.SITE) return "Cloudflare can't see the SITE storage yet. Push again or re-run the last build.";
+  if (!env.ADMIN_PASSWORD) return "Cloudflare can't see the ADMIN_PASSWORD secret yet. Add it under Settings > Variables and Secrets, then retry the latest deployment.";
+  if (!env.SITE) return "Cloudflare can't see the SITE storage yet. Add the KV binding under Settings > Bindings, then retry the latest deployment.";
   return '';
 }
 
