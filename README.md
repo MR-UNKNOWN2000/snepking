@@ -11,10 +11,10 @@ Pages rebuilds the site on every push to `main` (no build command; output direct
 
 ## Pages project settings
 
-- Build: framework preset **None**, build command empty, build output directory `public`, root directory empty.
-- Settings > Bindings: **KV namespace**, variable name `SITE`, namespace `snepking-site`.
-- Settings > Variables and Secrets (Production): type **Secret**, name `ADMIN_PASSWORD`, value = the owner's password.
-- Binding and secret changes only reach the site after a new deployment (Deployments > latest > Retry deployment).
+`wrangler.toml` sets the output folder (`public`) and the `SITE` binding to the `snepking-site` KV namespace, so those
+can't be edited in the dashboard. The one dashboard setting is the owner password:
+Settings > Variables and Secrets (Production): type **Secret**, name `ADMIN_PASSWORD`, value = the owner's password.
+Secret changes only reach the site after a new deployment (Deployments > latest > Retry deployment).
 
 Saved changes and uploads live in the `SITE` KV namespace; until the first save the site shows the copy built into
 `public/index.html`. Each save keeps the previous version under `site:prev`.

@@ -1,0 +1,10 @@
+# Cloudflare Pages config for snepking.com. This file is the source of truth for the build output folder and the
+# SITE storage binding. The owner password is NOT here: it's the ADMIN_PASSWORD secret in the Pages dashboard.
+name = "snepking"
+pages_build_output_dir = "./public"
+compatibility_date = "2025-01-01"
+
+# The "snepking-site" KV namespace: saved gallery data and uploaded images.
+[[kv_namespaces]]
+binding = "SITE"
+id = "bdc69c67d1c24f1b8d2c8e856ddf5ad5"
