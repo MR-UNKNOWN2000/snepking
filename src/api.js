@@ -1,8 +1,8 @@
-// Owner API for snepking.com (Cloudflare Pages Functions).
+// Owner API for snepking.com, called from src/worker.js for /api/* requests.
 //
-// Needs two things set in the Cloudflare dashboard for the Pages project:
-//   - a KV namespace bound as SITE   (stores the gallery data and uploaded images)
-//   - a secret named ADMIN_PASSWORD  (the owner's login password)
+// Needs two things on the Worker:
+//   - a KV namespace bound as SITE   (declared in wrangler.jsonc; created automatically on first deploy)
+//   - a secret named ADMIN_PASSWORD  (set in the dashboard: Settings > Variables and Secrets)
 // Without them the public site still works from the static files; logging in is disabled.
 //
 // Routes:
@@ -170,9 +170,7 @@ async function admin(request, env, rest) {
   return fail(404, 'Not found.');
 }
 
-export async function onRequest(context) {
-  const { request, env, params } = context;
-  const parts = [].concat(params.path || []).filter(Boolean);
+export async function handleApi(request, env, parts) {
   const method = request.method;
   try {
     if (parts[0] === 'data' && parts.length === 1) {

@@ -1,0 +1,15 @@
+{
+  // Cloudflare Workers config for snepking.com.
+  // Workers Builds runs `npx wrangler deploy` on every push to main.
+  "name": "snepking",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/img/*"]
+  },
+  // No id: Wrangler creates the namespace on the first deploy and reuses it after that.
+  "kv_namespaces": [{ "binding": "SITE" }],
+  "observability": { "enabled": true }
+}

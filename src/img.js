@@ -2,9 +2,8 @@
 // Images never change once uploaded (a new upload gets a new id), so browsers keep them for a year.
 // The copy kept in Cloudflare's edge cache expires after a day, so a deleted image disappears within a day
 // everywhere (and immediately at the location that handled the delete).
-export async function onRequestGet(context) {
-  const { request, env, params } = context;
-  const id = String(params.id || '');
+export async function handleImg(request, env, ctx, id) {
+  id = String(id || '');
   if (!/^[a-f0-9]{32}$/.test(id) || !env.SITE) return new Response('Not found', { status: 404 });
 
   const cache = caches.default;
@@ -16,7 +15,7 @@ export async function onRequestGet(context) {
 
   const type = (metadata && metadata.type) || 'application/octet-stream';
   const edgeCopy = new Response(value, { headers: { 'Content-Type': type, 'Cache-Control': 'public, max-age=86400', 'X-Content-Type-Options': 'nosniff' } });
-  context.waitUntil(cache.put(request, edgeCopy));
+  ctx.waitUntil(cache.put(request, edgeCopy));
   return new Response(value, {
     headers: { 'Content-Type': type, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' },
   });
