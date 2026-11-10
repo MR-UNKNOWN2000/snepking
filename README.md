@@ -8,8 +8,7 @@ Workers Builds runs `npx wrangler deploy` on every push to `main`.
 - `src/worker.js` routes `/api/*` and `/img/*` to the owner code and serves everything else from `public/`.
 - `src/api.js`: owner login, logout, saving the gallery, uploading and deleting images.
 - `src/img.js`: serves uploaded images.
-- `wrangler.jsonc`: Worker config. The `SITE` KV namespace has no id on purpose: Wrangler creates it on the first
-  deploy and reuses it afterwards.
+- `wrangler.jsonc`: Worker config, including the `SITE` binding to the `snepking-site` KV namespace.
 
 ## Owner login setup
 

@@ -9,7 +9,7 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*", "/img/*"]
   },
-  // No id: Wrangler creates the namespace on the first deploy and reuses it after that.
-  "kv_namespaces": [{ "binding": "SITE" }],
+  // The "snepking-site" KV namespace (created in the dashboard): saved gallery data and uploaded images.
+  "kv_namespaces": [{ "binding": "SITE", "id": "bdc69c67d1c24f1b8d2c8e856ddf5ad5" }],
   "observability": { "enabled": true }
 }
