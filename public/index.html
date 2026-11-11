@@ -7,7 +7,7 @@
 <meta property="og:title" content="MR.UNKNOWN">
 <meta property="og:description" content="All the art that has been made for my sona.">
 <meta property="og:type" content="website">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" id="tab-icon" href="/icon">
 <title>MR.UNKNOWN Art Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -183,7 +183,8 @@ a.link:hover .l-arrow{transform:translate(3px,-3px)}
 .uq-badge.bad{background:var(--danger);color:#fff}
 .age-lead{margin:0;font-size:19px;line-height:1.4}
 .genre-row .mono{padding-bottom:12px;white-space:nowrap}
-.lrow-tools{display:flex;gap:6px}
+.lrow-tools{display:flex;gap:6px;align-items:center}
+.lrow-tools .chk{margin-right:6px}
 .pd{display:grid;grid-template-columns:150px minmax(0,1fr);gap:18px;align-items:start}
 .pd-img img{width:100%;border-radius:2px;background:var(--wall)}
 .pd-fields{display:flex;flex-direction:column;gap:14px}
@@ -191,6 +192,8 @@ a.link:hover .l-arrow{transform:translate(3px,-3px)}
 .av-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .av-prev{width:56px;height:56px;border-radius:50%;background:var(--wall);overflow:hidden;border:1px solid var(--rule)}
 .av-prev img{width:100%;height:100%;object-fit:cover}
+.ic-prev{width:40px;height:40px;border-radius:8px;background:var(--wall);border:1px solid var(--rule);display:grid;place-items:center;overflow:hidden}
+.ic-prev img{width:32px;height:32px;object-fit:contain}
 
 /* lightbox */
 .lb{border:0;padding:0;margin:0;width:100vw;height:100vh;height:100dvh;max-width:100vw;max-height:100vh;max-height:100dvh;background:#0b0c10;color:#eceef2}
@@ -257,7 +260,7 @@ function errMsg(x, fallback){ return (x && (x.message || x.code)) ? String(x.mes
 /* ---------- state ---------- */
 var published = JSON.parse(D.getElementById('site-data').textContent);
 var state = clone(published);
-var dirty = false, editing = false, canEdit = false, busy = false, capsStarted = false;
+var dirty = false, editing = false, canEdit = false, busy = false, capsStarted = false, liveLoaded = false;
 var caps = {artifact: null, assets: null};
 var filter = 'all';
 var newUploads = new Set();
@@ -275,6 +278,7 @@ function blobUrl(id){
 function refs(s){
   var r = new Set();
   if (s.profile && s.profile.avatar) r.add(s.profile.avatar.id);
+  if (s.profile && s.profile.favicon) r.add(s.profile.favicon.id);
   (s.pieces || []).forEach(function(p){ if (p.img) r.add(p.img.id); if (p.thumb) r.add(p.thumb.id); });
   return r;
 }
@@ -562,7 +566,16 @@ function editBarHTML(){
       '</div>' +
     '</div></div>';
 }
+/* browser tab icon: the page starts on /icon (the server's saved choice) and follows the gallery data once it has loaded */
+var tabIcon = D.getElementById('tab-icon');
+function syncTabIcon(){
+  if (!tabIcon || !(liveLoaded || dirty)) return;
+  var f = state.profile && state.profile.favicon;
+  var href = f && f.id ? blobUrl(f.id) : '/favicon.svg';
+  if (tabIcon.getAttribute('href') !== href) tabIcon.setAttribute('href', href);
+}
 function render(){
+  syncTabIcon();
   var P = state.profile || {};
   var allLinks = state.links.filter(function(l){ return String(l.value || '').trim(); });
   var hiddenLinks = adultOK ? 0 : allLinks.filter(function(l){ return l.nsfw; }).length;
@@ -582,7 +595,7 @@ function render(){
         '<div class="hero-row">' +
           '<div class="intro">' +
             (P.tagline ? '<p class="tagline">' + esc(P.tagline) + '</p>' : '') +
-            (editing ? '<button type="button" class="btn btn-small" data-act="edit-profile">Edit name and intro</button>' : '') +
+            (editing ? '<button type="button" class="btn btn-small" data-act="edit-profile">Edit name, intro and tab icon</button>' : '') +
           '</div>' +
           (showLinks ? '<nav class="links" aria-label="Social links">' + linksHTML(visibleLinks) +
             (hiddenLinks ? '<button type="button" class="link link-gate" data-act="links-18"><span class="l-name">18+ accounts</span>' +
@@ -707,9 +720,10 @@ function confirmTap(btn, label){
 
 /* profile */
 function editProfile(){
-  var P = state.profile || {}, avatar = P.avatar || null;
+  var P = state.profile || {}, avatar = P.avatar || null, favicon = P.favicon || null;
+  var iconPrev = function(){ return '<img src="' + esc(favicon ? blobUrl(favicon.id) : '/favicon.svg') + '" alt="">'; };
   openDialog({
-    title:'Name and intro',
+    title:'Name, intro and tab icon',
     body:
       '<div class="field"><label for="f-name">Name shown at the top</label><input id="f-name" value="' + esc(P.name) + '" maxlength="60" autocomplete="name"></div>' +
       '<div class="field"><label for="f-tagline">Intro line</label><textarea id="f-tagline" rows="2" maxlength="220">' + esc(P.tagline) + '</textarea></div>' +
@@ -719,6 +733,11 @@ function editProfile(){
         '<label class="btn btn-small" for="f-avatar">Choose image</label><input type="file" id="f-avatar" class="vh" accept="image/*">' +
         '<button type="button" class="btn btn-small" id="f-avdel"' + (avatar ? '' : ' hidden') + '>Remove</button>' +
       '</div></div>' +
+      '<div class="field"><span class="label">Browser tab icon</span><div class="av-row">' +
+        '<div class="ic-prev" id="f-icprev">' + iconPrev() + '</div>' +
+        '<label class="btn btn-small" for="f-icon">Choose image</label><input type="file" id="f-icon" class="vh" accept="image/*">' +
+        '<button type="button" class="btn btn-small" id="f-icdel"' + (favicon ? '' : ' hidden') + '>Use default</button>' +
+      '</div><p class="hint">Square images work best. It\'s cropped to a square and shrunk to icon size.</p></div>' +
       '<p class="err" id="f-err" role="alert"></p>',
     foot:'<button type="button" class="btn" data-dact="cancel">Cancel</button><button type="submit" class="btn btn-primary">Save</button>',
     onMount:function(form){
@@ -735,11 +754,23 @@ function editProfile(){
       form.querySelector('#f-avdel').addEventListener('click', function(){
         avatar = null; form.querySelector('#f-avprev').innerHTML = ''; form.querySelector('#f-avdel').hidden = true;
       });
+      form.querySelector('#f-icon').addEventListener('change', function(e){
+        var f = e.target.files && e.target.files[0]; if (!f) return;
+        err.textContent = 'Uploading icon…';
+        squareIcon(f).then(uploadBlob).then(function(up){
+          favicon = {id:up.id};
+          form.querySelector('#f-icprev').innerHTML = iconPrev();
+          form.querySelector('#f-icdel').hidden = false; err.textContent = '';
+        }).catch(function(x){ err.textContent = errMsg(x, 'The icon could not be uploaded.'); });
+      });
+      form.querySelector('#f-icdel').addEventListener('click', function(){
+        favicon = null; form.querySelector('#f-icprev').innerHTML = iconPrev(); form.querySelector('#f-icdel').hidden = true;
+      });
     },
     onSubmit:function(form){
       var name = form.querySelector('#f-name').value.trim();
       if (!name){ form.querySelector('#f-err').textContent = 'Add the name you want at the top of the site.'; return; }
-      state.profile = {name:name, tagline:form.querySelector('#f-tagline').value.trim(), location:form.querySelector('#f-location').value.trim(), avatar:avatar};
+      state.profile = {name:name, tagline:form.querySelector('#f-tagline').value.trim(), location:form.querySelector('#f-location').value.trim(), avatar:avatar, favicon:favicon};
       closeDialog(); markDirty();
     }
   });
@@ -757,6 +788,7 @@ function linkRowsHTML(rows){
       '<div class="field"><label for="lv-' + esc(l.id) + '">' + (isEmail ? 'Email address' : 'Username or link') + '</label>' +
         '<input id="lv-' + esc(l.id) + '" value="' + esc(l.value) + '" autocomplete="off" autocapitalize="off" spellcheck="false" ' + (isEmail ? 'type="email" inputmode="email" placeholder="you@example.com"' : 'placeholder="@username or https://…"') + '></div>' +
       '<div class="lrow-tools">' +
+        '<label class="chk" for="l18-' + esc(l.id) + '"><input type="checkbox" id="l18-' + esc(l.id) + '" data-k="nsfw"' + (l.nsfw ? ' checked' : '') + '> 18+</label>' +
         '<button type="button" class="icon" data-lact="up" aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
         '<button type="button" class="icon" data-lact="down" aria-label="Move down"' + (i === rows.length - 1 ? ' disabled' : '') + '>↓</button>' +
         '<button type="button" class="icon danger" data-lact="del" aria-label="Remove link">✕</button>' +
@@ -768,17 +800,21 @@ function editLinks(){
   if (!rows.length) rows.push({id:uid('l'), platform:'instagram', value:''});
   var draw = function(form){ form.querySelector('#lrows').innerHTML = linkRowsHTML(rows); };
   var sync = function(form){
-    form.querySelectorAll('.lrow').forEach(function(el, i){ rows[i].platform = el.querySelector('select').value; rows[i].value = el.querySelector('input').value; });
+    form.querySelectorAll('.lrow').forEach(function(el, i){
+      rows[i].platform = el.querySelector('select').value;
+      rows[i].value = el.querySelector('input[id^="lv-"]').value;
+      rows[i].nsfw = el.querySelector('[data-k="nsfw"]').checked;
+    });
   };
   openDialog({
     title:'Social links',
-    body:'<p class="hint">Type a username like @yourname, or paste the full link. They open in a new tab.</p><div id="lrows" class="lrows"></div><div><button type="button" class="btn btn-small" id="ladd">Add a link</button></div>',
+    body:'<p class="hint">Type a username like @yourname, or paste the full link. They open in a new tab. Tick 18+ to hide a link until visitors confirm their age; it shows under 18+ accounts.</p><div id="lrows" class="lrows"></div><div><button type="button" class="btn btn-small" id="ladd">Add a link</button></div>',
     foot:'<button type="button" class="btn" data-dact="cancel">Cancel</button><button type="submit" class="btn btn-primary">Save links</button>',
     onMount:function(form){
       draw(form);
       form.querySelector('#ladd').addEventListener('click', function(){
         sync(form); rows.push({id:uid('l'), platform:'instagram', value:''}); draw(form);
-        var ins = form.querySelectorAll('.lrow input'); if (ins.length) ins[ins.length - 1].focus();
+        var ins = form.querySelectorAll('.lrow input[id^="lv-"]'); if (ins.length) ins[ins.length - 1].focus();
       });
       var box = form.querySelector('#lrows');
       box.addEventListener('click', function(e){
@@ -1001,6 +1037,16 @@ function squareAvatar(file){
     x.drawImage(src.img, (src.w - s) / 2, (src.h - s) / 2, s, s, 0, 0, size, size);
     src.close();
     return encode(c, 'image/jpeg', .88);
+  });
+}
+function squareIcon(file){
+  return decode(file).then(function(src){
+    var s = Math.min(src.w, src.h), size = Math.min(192, s);
+    var c = D.createElement('canvas'); c.width = size; c.height = size;
+    var x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(src.img, (src.w - s) / 2, (src.h - s) / 2, s, s, 0, 0, size, size);
+    src.close();
+    return encode(c, 'image/png');
   });
 }
 function uploadBlob(b){
@@ -1335,9 +1381,10 @@ function loadLive(){
   return fetch('/api/data', {cache:'no-store', credentials:'same-origin'})
     .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
     .then(function(d){
-      if (!d || !Array.isArray(d.pieces)) return;
+      liveLoaded = true;
+      if (!d || !Array.isArray(d.pieces)){ syncTabIcon(); return; }
       if (!d.assetMap && published.assetMap) d.assetMap = published.assetMap;
-      if (JSON.stringify(d) === JSON.stringify(published)) return;
+      if (JSON.stringify(d) === JSON.stringify(published)){ syncTabIcon(); return; }
       published = d;
       if (!dirty) state = clone(d);
       render();

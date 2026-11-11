@@ -6,6 +6,7 @@ Pages rebuilds the site on every push to `main` (no build command; output direct
 - `public/` is the website: `index.html` (page plus a built-in copy of the gallery data, used as the fallback),
   `art/` (the original 91 images: full-size files plus `_t` thumbnails), `favicon.svg`, `_headers`.
 - `functions/api/[[path]].js` and `functions/img/[id].js` hand `/api/*` and `/img/*` to the code in `src/`.
+- `functions/icon.js` serves `/icon`, the browser tab icon: a redirect to the icon chosen in the editor, or `favicon.svg`.
 - `src/api.js`: owner login, logout, saving the gallery, uploading and deleting images.
 - `src/img.js`: serves uploaded images.
 
