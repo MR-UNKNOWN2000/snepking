@@ -584,7 +584,7 @@ function render(){
   app.innerHTML =
     '<div class="wrap">' +
       '<header class="top">' +
-        '<span class="mono">' + esc(P.location ? 'Portfolio · ' + P.location : 'Portfolio') + '</span>' +
+        (P.location ? '<span class="mono">' + esc(P.location) + '</span>' : '<span></span>') +
         (canEdit ? '<div class="top-actions"><button type="button" class="btn btn-small btn-primary" data-act="upload"' + (busy ? ' disabled' : '') + '>Upload art</button>' +
           '<button type="button" class="btn btn-small' + (editing ? ' is-on' : '') + '" data-act="toggle-edit" aria-pressed="' + editing + '">' + (editing ? 'Done editing' : 'Edit site') + '</button>' +
           '<button type="button" class="btn btn-small" data-act="logout">Log out</button></div>' : '') +
