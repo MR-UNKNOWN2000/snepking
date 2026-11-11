@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0f1115">
 <meta name="description" content="All the art that has been made for my sona.">
 <meta property="og:title" content="MR.UNKNOWN">
 <meta property="og:description" content="All the art that has been made for my sona.">
@@ -17,29 +19,20 @@
 <style id="site-css">
 :root{
   /* Layout: oversized condensed name, intro beside a link list, then a typographic genre index over a masonry wall of work */
-  --wall:#eceef1;
-  --panel:#ffffff;
-  --ink:#121419;
-  --ink-soft:#596070;
-  --rule:#cfd4db;
-  --accent:#2337c6;
-  --accent-ink:#ffffff;
-  --danger:#b42318;
+  /* Always dark, whatever the visitor's device is set to */
+  --wall:#0f1115;
+  --panel:#181b21;
+  --ink:#eceef2;
+  --ink-soft:#9aa1ae;
+  --rule:#2b3039;
+  --accent:#8e9bff;
+  --accent-ink:#0b0d14;
+  --danger:#ff8a7a;
   --display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",sans-serif;
   --body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --gap:clamp(12px,2vw,24px);
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --wall:#0f1115;--panel:#181b21;--ink:#eceef2;--ink-soft:#9aa1ae;--rule:#2b3039;
-    --accent:#8e9bff;--accent-ink:#0b0d14;--danger:#ff8a7a;color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --wall:#0f1115;--panel:#181b21;--ink:#eceef2;--ink-soft:#9aa1ae;--rule:#2b3039;
-  --accent:#8e9bff;--accent-ink:#0b0d14;--danger:#ff8a7a;color-scheme:dark;
+  color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -51,7 +44,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .mono{font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
-.wrap{max-width:1320px;margin:0 auto;padding:0 max(16px,4vw)}
+.wrap{margin:0 auto;padding:0 max(16px,4vw)}
 
 /* top + hero */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 0;min-height:60px}
@@ -61,7 +54,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.is-on{background:var(--ink);color:var(--wall)}
 .hero{padding:clamp(14px,3.5vw,44px) 0 clamp(32px,5vw,64px);border-bottom:2px solid var(--ink)}
 .avatar{width:76px;height:76px;border-radius:50%;object-fit:cover;margin:0 0 16px;background:var(--panel)}
-.name{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:clamp(76px,17vw,240px);line-height:.82;letter-spacing:-.005em;margin:0 0 clamp(22px,3vw,40px);text-wrap:balance;overflow-wrap:normal;max-width:100%}
+.name{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:clamp(76px,17vw,420px);line-height:.82;letter-spacing:-.005em;margin:0 0 clamp(22px,3vw,40px);text-wrap:balance;overflow-wrap:normal;max-width:100%}
 .hero-row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:start}
 .tagline{font-size:clamp(19px,2vw,24px);line-height:1.35;margin:0 0 16px;max-width:34ch;text-wrap:pretty}
 .intro .btn{margin-top:4px}
@@ -92,7 +85,7 @@ a.link:hover .l-arrow{transform:translate(3px,-3px)}
 .gi{white-space:nowrap}
 .sep{color:var(--rule);font-weight:400;margin-left:.22em}
 .t18{display:inline-block;font-family:var(--mono);font-size:clamp(10px,.2em,14px);font-weight:500;letter-spacing:.02em;line-height:1;padding:.3em .45em;border:1.5px solid currentColor;border-radius:3px;vertical-align:middle;position:relative;top:-.12em;margin-left:.3em;text-decoration:none}
-.grid{columns:4 240px;column-gap:var(--gap)}
+.grid{columns:260px;column-gap:var(--gap)}
 .piece{break-inside:avoid;margin:0 0 var(--gap);display:block}
 .piece[hidden]{display:none}
 .piece.in{animation:pin .35s ease both}
@@ -129,7 +122,7 @@ a.link:hover .l-arrow{transform:translate(3px,-3px)}
 .btn-primary:disabled:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn-danger{border-color:var(--danger);color:var(--danger)}
 .btn-danger:hover{background:var(--danger);border-color:var(--danger);color:var(--panel)}
-.btn.armed,.btn.armed:hover{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.armed,.btn.armed:hover{background:var(--danger);border-color:var(--danger);color:#0b0d14}
 .icon{width:40px;height:40px;flex:0 0 40px;display:inline-grid;place-items:center;border:1px solid var(--rule);border-radius:4px;background:transparent;color:var(--ink);cursor:pointer;font-size:16px;line-height:1;padding:0}
 .icon:hover{border-color:var(--ink)}
 .icon:disabled{opacity:.35;cursor:default}
@@ -180,7 +173,7 @@ a.link:hover .l-arrow{transform:translate(3px,-3px)}
 .uq-x,.uq-badge{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:999px;display:grid;place-items:center;font-size:12px;line-height:1;border:0;background:var(--ink);color:var(--wall)}
 .uq-x{cursor:pointer}
 .uq-badge.ok{background:var(--accent);color:var(--accent-ink)}
-.uq-badge.bad{background:var(--danger);color:#fff}
+.uq-badge.bad{background:var(--danger);color:#0b0d14}
 .age-lead{margin:0;font-size:19px;line-height:1.4}
 .genre-row .mono{padding-bottom:12px;white-space:nowrap}
 .lrow-tools{display:flex;gap:6px;align-items:center}
